@@ -23,12 +23,12 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var pickImageLauncher1: ActivityResultLauncher<Intent>
     private lateinit var pickImageLauncher2: ActivityResultLauncher<Intent>
+    private lateinit var pickImageLauncherOutput: ActivityResultLauncher<Intent>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Initialize views
         imageView1 = findViewById(R.id.imageView1)
         imageView2 = findViewById(R.id.imageView2)
         imageViewOutput = findViewById(R.id.imageViewOutput)
@@ -56,15 +56,28 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Set up buttons
+        pickImageLauncherOutput = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            val uri = result.data?.data
+            if (uri != null) {
+                imageViewOutput.setImageURI(uri)
+            }
+        }
+
         buttonSelectImage1.setOnClickListener { selectImage(pickImageLauncher1) }
         buttonSelectImage2.setOnClickListener { selectImage(pickImageLauncher2) }
         buttonPerformXor.setOnClickListener { performXor() }
+        // Click listener for Output ImageView
+        imageViewOutput.setOnClickListener { selectImageForOutput() }
     }
 
     private fun selectImage(launcher: ActivityResultLauncher<Intent>) {
         val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
         launcher.launch(intent)
+    }
+
+    private fun selectImageForOutput() {
+        val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+        pickImageLauncherOutput.launch(intent)
     }
 
     private fun performXor() {
