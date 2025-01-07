@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -12,83 +10,77 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:gravity="center_horizontal"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:gravity="center">
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
             android:layout_margin="8dp"
-            android:layout_gravity="center_horizontal"
             android:orientation="vertical">
 
             <ImageView
                 android:id="@+id/imageView1"
                 android:layout_width="150dp"
                 android:layout_height="150dp"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="16dp"
-                android:scaleType="centerCrop"
                 android:background="#EEEEEE"
                 android:contentDescription="Image 1"
-                tools:ignore="HardcodedText" />
+                android:scaleType="centerCrop" />
 
             <Button
                 android:id="@+id/buttonSelectImage1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Universal Share"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="16dp"
-                tools:ignore="HardcodedText" />
-
+                android:text="Select Image 1" />
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_margin="8dp"
-            android:orientation="vertical">
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:layout_margin="8dp">
 
             <ImageView
                 android:id="@+id/imageView2"
                 android:layout_width="150dp"
                 android:layout_height="150dp"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="16dp"
                 android:background="#EEEEEE"
-                android:contentDescription="Image 2"
                 android:scaleType="centerCrop"
-                tools:ignore="HardcodedText" />
+                android:contentDescription="Image 2" />
 
             <Button
                 android:id="@+id/buttonSelectImage2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="16dp"
-                android:text="Pie-shaped Share"
-                tools:ignore="HardcodedText" />
+                android:text="Select Image 2" />
         </LinearLayout>
     </LinearLayout>
 
-    <Button
-        android:id="@+id/buttonPerformXor"
+    <EditText
+        android:id="@+id/editTextRotation"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Decrypt Image"
-        android:layout_margin="8dp"
-        tools:ignore="HardcodedText" />
+        android:layout_marginVertical="8dp"
+        android:hint="Enter rotation angle (degrees)"
+        android:inputType="numberDecimal"
+        android:minHeight="48dp" />
+
+    <Button
+        android:id="@+id/buttonRotateAndXor"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Rotate and XOR"
+        android:layout_gravity="center" />
 
     <ImageView
         android:id="@+id/imageViewOutput"
         android:layout_width="200dp"
         android:layout_height="200dp"
-        android:layout_gravity="center_horizontal"
-        android:scaleType="centerCrop"
         android:background="#EEEEEE"
-        android:contentDescription="XOR Output"
-        tools:ignore="HardcodedText" />
+        android:scaleType="centerCrop"
+        android:contentDescription="XOR Output" />
 </LinearLayout>
