@@ -1,107 +1,181 @@
 package dev.mnsharma.pixelcraft
 
+import android.app.AlertDialog
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Canvas
-import android.graphics.Matrix
+import android.graphics.Color
 import android.os.Bundle
+import android.widget.Button
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import java.io.IOException
+import kotlin.math.cos
+import kotlin.math.floor
+import kotlin.math.sin
 
 class MainActivity : AppCompatActivity() {
+
+    private lateinit var secretImages: Array<ImageView>
+//    private lateinit var outputFolder: File
+    private lateinit var progressDialog: AlertDialog
+    private lateinit var progressBar: ProgressBar
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val secretImage1: ImageView = findViewById(R.id.secretImage1)
-        val secretImage2: ImageView = findViewById(R.id.secretImage2)
-        val secretImage3: ImageView = findViewById(R.id.secretImage3)
-        val secretImage4: ImageView = findViewById(R.id.secretImage4)
+        secretImages = arrayOf(
+            findViewById(R.id.secretImage1),
+            findViewById(R.id.secretImage2),
+            findViewById(R.id.secretImage3),
+            findViewById(R.id.secretImage4)
+        )
 
-        //showToast("Loading images from raw resources...")
+        // Initialize the ProgressBar in a Dialog
+        progressBar = ProgressBar(this)
+        progressBar.isIndeterminate = true
+        val dialogBuilder = AlertDialog.Builder(this)
+            .setTitle("Processing")
+            .setMessage("Decrypting images...")
+            .setView(progressBar)
+            .setCancelable(false)
 
-        val bmp0 = loadImageFromRaw(R.raw.bmp0)
-        val bmp1 = loadImageFromRaw(R.raw.bmp1)
-        val bmp2 = loadImageFromRaw(R.raw.bmp2)
-        val bmp3 = loadImageFromRaw(R.raw.bmp3)
-        val bmp4 = loadImageFromRaw(R.raw.bmp4)
+        progressDialog = dialogBuilder.create()
 
-        if (bmp0 != null && bmp1 != null) {
-            //showToast("Aligning and XORing first pair of images...")
-            secretImage1.setImageBitmap(xorAlignedBitmaps(bmp0, bmp1))
-        }
-
-        if (bmp0 != null && bmp2 != null && bmp3 != null && bmp4 != null) {
-            //showToast("Aligning and XORing second, third, and fourth images...")
-            secretImage2.setImageBitmap(xorAlignedBitmaps(bmp0, rotateBitmap(bmp2, -89f)))
-            secretImage3.setImageBitmap(xorAlignedBitmaps(bmp0, rotateBitmap(bmp3, -179f)))
-            secretImage4.setImageBitmap(xorAlignedBitmaps(bmp0, rotateBitmap(bmp4, -271f)))
-        } else {
-            showToast("Some images failed to load.")
+        findViewById<Button>(R.id.btnDecrypt).setOnClickListener {
+            decryptSecretImages()
         }
     }
 
-    private fun loadImageFromRaw(resId: Int): Bitmap? {
-        return try {
-            val options = BitmapFactory.Options().apply {
-                inPreferredConfig = Bitmap.Config.RGB_565
+    private fun decryptSecretImages() {
+        progressDialog.show()
+
+        // Start background task to handle image decryption
+        Thread {
+            val bitmaps = loadRawBitmaps()
+            if (bitmaps.isEmpty()) {
+                runOnUiThread {
+                    progressDialog.dismiss()
+                    Toast.makeText(this, "Failed to load secret images", Toast.LENGTH_SHORT).show()
+                }
+                return@Thread
             }
-            val inputStream = resources.openRawResource(resId)
-            BitmapFactory.decodeStream(inputStream, null, options)
-        } catch (e: IOException) {
-            showToast("Error loading image: ${e.message}")
-            e.printStackTrace()
-            null
-        }
+
+            val referenceImage = bitmaps[0]
+            val rotatedBitmaps = arrayOf(
+                bitmaps[1],
+                rotateImageUsingEquation(bitmaps[2], referenceImage, -90f),
+                rotateImageUsingEquation(bitmaps[3], referenceImage, -180f),
+                rotateImageUsingEquation(bitmaps[4], referenceImage, -270f)
+            )
+
+            val decryptedImages = rotatedBitmaps.map { xorImages(referenceImage, it) }
+
+            runOnUiThread {
+                decryptedImages.forEachIndexed { index, bitmap ->
+                    secretImages[index].setImageBitmap(bitmap)
+                    // Save the bitmap in background without blocking UI
+//                    saveBitmap(bitmap, "decrypted_image_$index.png")
+                }
+                progressDialog.dismiss()
+                Toast.makeText(this, "Decryption completed!", Toast.LENGTH_LONG).show()
+            }
+        }.start() // Start the background thread for decryption
     }
 
-    private fun xorAlignedBitmaps(bmp1: Bitmap, bmp2: Bitmap): Bitmap {
-        val alignedBmp1 = alignToCenter(bmp1, bmp2)
-        val alignedBmp2 = alignToCenter(bmp2, bmp1)
+    private fun loadRawBitmaps(): Array<Bitmap> {
+        return arrayOf(
+            BitmapFactory.decodeResource(resources, R.raw.bmp0),
+            BitmapFactory.decodeResource(resources, R.raw.bmp1),
+            BitmapFactory.decodeResource(resources, R.raw.bmp2),
+            BitmapFactory.decodeResource(resources, R.raw.bmp3),
+            BitmapFactory.decodeResource(resources, R.raw.bmp4)
+        )
+    }
 
-        val width = alignedBmp1.width
-        val height = alignedBmp1.height
-        val result = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
+    private fun xorImages(bmpRef: Bitmap, bmpTarget: Bitmap): Bitmap {
+        val width = bmpRef.width
+        val height = bmpRef.height
+        val result = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
 
-        //showToast("Performing XOR operation on images...")
-
-        for (x in 0 until width) {
-            for (y in 0 until height) {
-                val pixel1 = alignedBmp1.getPixel(x, y)
-                val pixel2 = alignedBmp2.getPixel(x, y)
-                val xorPixel = pixel1 xor pixel2
+        for (y in 0 until height) {
+            for (x in 0 until width) {
+                val refPixel = bmpRef.getPixel(x, y)
+                val targetPixel = bmpTarget.getPixel(x, y)
+                val xorPixel = refPixel xor targetPixel
                 result.setPixel(x, y, xorPixel)
             }
         }
 
-        //showToast("XOR operation completed.")
         return result
     }
 
-    private fun alignToCenter(source: Bitmap, target: Bitmap): Bitmap {
-        val width = maxOf(source.width, target.width)
-        val height = maxOf(source.height, target.height)
+    private fun rotateImageUsingEquation(bitmap: Bitmap, bmpRefImg: Bitmap, angle: Float): Bitmap {
+        val width = bitmap.width
+        val height = bitmap.height
+        val rotatedBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val originX = width / 2.0
+        val originY = height / 2.0
+        val radAngle = Math.toRadians(angle.toDouble())
 
-        val centeredBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
-        val canvas = Canvas(centeredBitmap)
-        val xOffset = (width - source.width) / 2
-        val yOffset = (height - source.height) / 2
-        canvas.drawBitmap(source, xOffset.toFloat(), yOffset.toFloat(), null)
+        for (y in 0 until height) {
+            for (x in 0 until width) {
+                val col = bmpRefImg.getPixel(x, y)
+                val colImg = bitmap.getPixel(x, y)
 
-        return centeredBitmap
+                if (Color.red(col) == 0) {
+                    val deltaX = x - originX
+                    val deltaY = y - originY
+                    val newX = floor(originX + cos(radAngle) * deltaX - sin(radAngle) * deltaY).toInt()
+                    val newY = floor(originY + sin(radAngle) * deltaX + cos(radAngle) * deltaY).toInt()
+
+                    if (newX in 0 until width && newY in 0 until height) {
+                        rotatedBitmap.setPixel(newX, newY, colImg)
+                    }
+                } else {
+                    rotatedBitmap.setPixel(x, y, Color.WHITE)
+                }
+            }
+        }
+
+        return rotatedBitmap
     }
 
-    private fun rotateBitmap(bitmap: Bitmap, degrees: Float): Bitmap {
-        //showToast("Rotating image by $degrees degrees...")
-        val matrix = Matrix()
-        matrix.postRotate(degrees)
-        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
-    }
+//    private fun saveBitmap(bitmap: Bitmap, fileName: String) {
+//        // Perform saving operation in a background thread to avoid ANR
+//        Thread {
+//            try {
+//                val file = File(outputFolder, fileName)
+//                val outputStream = FileOutputStream(file)
+//                bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+//                outputStream.flush()
+//                outputStream.close()
+//
+//                // Update UI on the main thread after saving the image
+//                runOnUiThread {
+//                    Toast.makeText(this, "Image saved at: ${file.absolutePath}", Toast.LENGTH_LONG).show()
+//                }
+//            } catch (e: IOException) {
+//                // Handle error in saving image
+//                runOnUiThread {
+//                    Toast.makeText(this, "Failed to save image", Toast.LENGTH_SHORT).show()
+//                }
+//            }
+//        }.start() // Start background thread
+//    }
 
-    private fun showToast(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
-    }
+//    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+//        super.onActivityResult(requestCode, resultCode, data)
+//        if (requestCode == REQUEST_FOLDER_PICKER && resultCode == Activity.RESULT_OK) {
+//            data?.data?.let { uri ->
+//                outputFolder = File(Environment.getExternalStorageDirectory(), uri.path!!)
+//                Toast.makeText(this, "Folder selected: ${outputFolder.absolutePath}", Toast.LENGTH_SHORT).show()
+//            }
+//        }
+//    }
+
+//    companion object {
+//        private const val REQUEST_FOLDER_PICKER = 1
+//    }
 }

@@ -33,7 +33,8 @@
             android:layout_height="150dp"
             android:layout_margin="8dp"
             android:scaleType="centerCrop"
-            android:background="@android:color/darker_gray" />
+            android:background="@android:color/darker_gray"
+            tools:ignore="ContentDescription" />
 
         <ImageView
             android:id="@+id/secretImage2"
@@ -41,7 +42,8 @@
             android:layout_height="150dp"
             android:layout_margin="8dp"
             android:scaleType="centerCrop"
-            android:background="@android:color/darker_gray" />
+            android:background="@android:color/darker_gray"
+            tools:ignore="ContentDescription" />
 
         <ImageView
             android:id="@+id/secretImage3"
@@ -49,7 +51,8 @@
             android:layout_height="150dp"
             android:layout_margin="8dp"
             android:scaleType="centerCrop"
-            android:background="@android:color/darker_gray" />
+            android:background="@android:color/darker_gray"
+            tools:ignore="ContentDescription" />
 
         <ImageView
             android:id="@+id/secretImage4"
@@ -57,7 +60,18 @@
             android:layout_height="150dp"
             android:layout_margin="8dp"
             android:scaleType="centerCrop"
-            android:background="@android:color/darker_gray" />
+            android:background="@android:color/darker_gray"
+            tools:ignore="ContentDescription" />
 
     </androidx.gridlayout.widget.GridLayout>
+
+    <!-- Button to Start XOR Decryption -->
+    <Button
+        android:id="@+id/btnDecrypt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Decrypt Secret Image"
+        android:layout_marginTop="8dp"
+        android:layout_gravity="center"
+        tools:ignore="HardcodedText" />
 </LinearLayout>
