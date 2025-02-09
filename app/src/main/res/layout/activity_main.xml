@@ -1,86 +1,63 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:gravity="center"
-    android:padding="16dp">
+    android:orientation="vertical"
+    android:padding="16dp"
+    tools:context=".MainActivity">
 
-    <LinearLayout
+    <TextView
+        android:id="@+id/title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center">
+        android:text="Universal Share based Decryption"
+        android:textAlignment="center"
+        android:textSize="20sp"
+        android:layout_marginBottom="16dp"
+        android:textStyle="bold"
+        tools:ignore="HardcodedText" />
 
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:gravity="center"
+    <!-- GridLayout for secrets -->
+    <androidx.gridlayout.widget.GridLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:columnCount="2"
+        app:rowCount="2"
+        android:layout_gravity="center">
+
+        <ImageView
+            android:id="@+id/secretImage1"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
             android:layout_margin="8dp"
-            android:orientation="vertical">
+            android:scaleType="centerCrop"
+            android:background="@android:color/darker_gray" />
 
-            <ImageView
-                android:id="@+id/imageView1"
-                android:layout_width="150dp"
-                android:layout_height="150dp"
-                android:background="#EEEEEE"
-                android:contentDescription="Image 1"
-                android:scaleType="centerCrop" />
+        <ImageView
+            android:id="@+id/secretImage2"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:layout_margin="8dp"
+            android:scaleType="centerCrop"
+            android:background="@android:color/darker_gray" />
 
-            <Button
-                android:id="@+id/buttonSelectImage1"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Select Image 1" />
-        </LinearLayout>
+        <ImageView
+            android:id="@+id/secretImage3"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:layout_margin="8dp"
+            android:scaleType="centerCrop"
+            android:background="@android:color/darker_gray" />
 
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:gravity="center"
-            android:orientation="vertical"
-            android:layout_margin="8dp">
+        <ImageView
+            android:id="@+id/secretImage4"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:layout_margin="8dp"
+            android:scaleType="centerCrop"
+            android:background="@android:color/darker_gray" />
 
-            <ImageView
-                android:id="@+id/imageView2"
-                android:layout_width="150dp"
-                android:layout_height="150dp"
-                android:background="#EEEEEE"
-                android:scaleType="centerCrop"
-                android:contentDescription="Image 2" />
-
-            <Button
-                android:id="@+id/buttonSelectImage2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Select Image 2" />
-        </LinearLayout>
-    </LinearLayout>
-
-    <EditText
-        android:id="@+id/editTextRotation"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginVertical="8dp"
-        android:hint="Enter rotation angle (degrees)"
-        android:inputType="numberDecimal"
-        android:minHeight="48dp" />
-
-    <Button
-        android:id="@+id/buttonRotateAndXor"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Rotate and XOR"
-        android:layout_gravity="center" />
-
-    <ImageView
-        android:id="@+id/imageViewOutput"
-        android:layout_width="200dp"
-        android:layout_height="200dp"
-        android:background="#EEEEEE"
-        android:scaleType="centerCrop"
-        android:contentDescription="XOR Output" />
+    </androidx.gridlayout.widget.GridLayout>
 </LinearLayout>

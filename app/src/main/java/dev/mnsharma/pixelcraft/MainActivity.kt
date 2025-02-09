@@ -1,131 +1,107 @@
 package dev.mnsharma.pixelcraft
 
-import android.content.Intent
-import android.database.Cursor
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
 import android.graphics.Matrix
-import android.net.Uri
 import android.os.Bundle
-import android.provider.MediaStore
-import android.provider.OpenableColumns
-import android.widget.*
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
+import android.widget.ImageView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import java.io.InputStream
+import java.io.IOException
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var imageView1: ImageView
-    private lateinit var imageView2: ImageView
-    private lateinit var imageViewOutput: ImageView
-    private lateinit var editTextRotation: EditText
-
-    private var bitmap1: Bitmap? = null
-    private var bitmap2: Bitmap? = null
-
-    private lateinit var pickImageLauncher1: ActivityResultLauncher<Intent>
-    private lateinit var pickImageLauncher2: ActivityResultLauncher<Intent>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Initialize views
-        imageView1 = findViewById(R.id.imageView1)
-        imageView2 = findViewById(R.id.imageView2)
-        imageViewOutput = findViewById(R.id.imageViewOutput)
-        editTextRotation = findViewById(R.id.editTextRotation)
+        val secretImage1: ImageView = findViewById(R.id.secretImage1)
+        val secretImage2: ImageView = findViewById(R.id.secretImage2)
+        val secretImage3: ImageView = findViewById(R.id.secretImage3)
+        val secretImage4: ImageView = findViewById(R.id.secretImage4)
 
-        val buttonSelectImage1: Button = findViewById(R.id.buttonSelectImage1)
-        val buttonSelectImage2: Button = findViewById(R.id.buttonSelectImage2)
-        val buttonRotateAndXor: Button = findViewById(R.id.buttonRotateAndXor)
+        //showToast("Loading images from raw resources...")
 
-        // Register activity result launchers for image selection
-        pickImageLauncher1 = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            val uri = result.data?.data
-            if (uri != null) {
-                val inputStream: InputStream? = contentResolver.openInputStream(uri)
-                bitmap1 = BitmapFactory.decodeStream(inputStream)
-                imageView1.setImageBitmap(bitmap1)
-                displayImageName(uri) // Show image name as Toast
+        val bmp0 = loadImageFromRaw(R.raw.bmp0)
+        val bmp1 = loadImageFromRaw(R.raw.bmp1)
+        val bmp2 = loadImageFromRaw(R.raw.bmp2)
+        val bmp3 = loadImageFromRaw(R.raw.bmp3)
+        val bmp4 = loadImageFromRaw(R.raw.bmp4)
+
+        if (bmp0 != null && bmp1 != null) {
+            //showToast("Aligning and XORing first pair of images...")
+            secretImage1.setImageBitmap(xorAlignedBitmaps(bmp0, bmp1))
+        }
+
+        if (bmp0 != null && bmp2 != null && bmp3 != null && bmp4 != null) {
+            //showToast("Aligning and XORing second, third, and fourth images...")
+            secretImage2.setImageBitmap(xorAlignedBitmaps(bmp0, rotateBitmap(bmp2, -89f)))
+            secretImage3.setImageBitmap(xorAlignedBitmaps(bmp0, rotateBitmap(bmp3, -179f)))
+            secretImage4.setImageBitmap(xorAlignedBitmaps(bmp0, rotateBitmap(bmp4, -271f)))
+        } else {
+            showToast("Some images failed to load.")
+        }
+    }
+
+    private fun loadImageFromRaw(resId: Int): Bitmap? {
+        return try {
+            val options = BitmapFactory.Options().apply {
+                inPreferredConfig = Bitmap.Config.RGB_565
+            }
+            val inputStream = resources.openRawResource(resId)
+            BitmapFactory.decodeStream(inputStream, null, options)
+        } catch (e: IOException) {
+            showToast("Error loading image: ${e.message}")
+            e.printStackTrace()
+            null
+        }
+    }
+
+    private fun xorAlignedBitmaps(bmp1: Bitmap, bmp2: Bitmap): Bitmap {
+        val alignedBmp1 = alignToCenter(bmp1, bmp2)
+        val alignedBmp2 = alignToCenter(bmp2, bmp1)
+
+        val width = alignedBmp1.width
+        val height = alignedBmp1.height
+        val result = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
+
+        //showToast("Performing XOR operation on images...")
+
+        for (x in 0 until width) {
+            for (y in 0 until height) {
+                val pixel1 = alignedBmp1.getPixel(x, y)
+                val pixel2 = alignedBmp2.getPixel(x, y)
+                val xorPixel = pixel1 xor pixel2
+                result.setPixel(x, y, xorPixel)
             }
         }
 
-        pickImageLauncher2 = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            val uri = result.data?.data
-            if (uri != null) {
-                val inputStream: InputStream? = contentResolver.openInputStream(uri)
-                bitmap2 = BitmapFactory.decodeStream(inputStream)
-                imageView2.setImageBitmap(bitmap2)
-                displayImageName(uri) // Show image name as Toast
-            }
-        }
-
-        // Set up buttons
-        buttonSelectImage1.setOnClickListener { selectImage(pickImageLauncher1) }
-        buttonSelectImage2.setOnClickListener { selectImage(pickImageLauncher2) }
-        buttonRotateAndXor.setOnClickListener { rotateAndXor() }
+        //showToast("XOR operation completed.")
+        return result
     }
 
-    private fun selectImage(launcher: ActivityResultLauncher<Intent>) {
-        val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-        launcher.launch(intent)
+    private fun alignToCenter(source: Bitmap, target: Bitmap): Bitmap {
+        val width = maxOf(source.width, target.width)
+        val height = maxOf(source.height, target.height)
+
+        val centeredBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
+        val canvas = Canvas(centeredBitmap)
+        val xOffset = (width - source.width) / 2
+        val yOffset = (height - source.height) / 2
+        canvas.drawBitmap(source, xOffset.toFloat(), yOffset.toFloat(), null)
+
+        return centeredBitmap
     }
 
-    private fun rotateAndXor() {
-        if (bitmap1 == null || bitmap2 == null) {
-            Toast.makeText(this, "Please select both images", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val rotationInput = editTextRotation.text.toString()
-        val rotationAngle = rotationInput.toFloatOrNull() ?: 0f
-
-        try {
-            val rotatedBitmap = rotateBitmap(bitmap2!!, rotationAngle)
-            val resultBitmap = xorImages(bitmap1!!, rotatedBitmap)
-            imageViewOutput.setImageBitmap(resultBitmap) // Display XOR result
-        } catch (e: Exception) {
-            Toast.makeText(this, "An error occurred: ${e.message}", Toast.LENGTH_LONG).show()
-        }
-    }
-
-    private fun xorImages(bitmap1: Bitmap, bitmap2: Bitmap): Bitmap {
-        val width = bitmap1.width.coerceAtMost(bitmap2.width)
-        val height = bitmap1.height.coerceAtMost(bitmap2.height)
-        val xorBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-
-        for (y in 0 until height) {
-            for (x in 0 until width) {
-                val pixel1 = bitmap1.getPixel(x, y)
-                val pixel2 = bitmap2.getPixel(x, y)
-
-                val r = (pixel1 shr 16 and 0xFF) xor (pixel2 shr 16 and 0xFF)
-                val g = (pixel1 shr 8 and 0xFF) xor (pixel2 shr 8 and 0xFF)
-                val b = (pixel1 and 0xFF) xor (pixel2 and 0xFF)
-
-                xorBitmap.setPixel(x, y, (0xFF shl 24) or (r shl 16) or (g shl 8) or b)
-            }
-        }
-
-        return xorBitmap
-    }
-
-    private fun rotateBitmap(bitmap: Bitmap, angle: Float): Bitmap {
+    private fun rotateBitmap(bitmap: Bitmap, degrees: Float): Bitmap {
+        //showToast("Rotating image by $degrees degrees...")
         val matrix = Matrix()
-        matrix.postRotate(angle)
+        matrix.postRotate(degrees)
         return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
     }
 
-    private fun displayImageName(uri: Uri) {
-        val cursor: Cursor? = contentResolver.query(uri, null, null, null, null)
-        cursor?.use {
-            if (it.moveToFirst()) {
-                val nameIndex = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                val imageName = it.getString(nameIndex)
-                Toast.makeText(this, "Selected Image: $imageName", Toast.LENGTH_SHORT).show()
-            }
-        }
+    private fun showToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 }
